@@ -100,19 +100,21 @@ namespace Android_Question_App
                         reditRecylerView.SetAdapter(mAdapter);
 
                         mAdapter.ItemClick += OnItemClick;
-
-                        progressBarRequesting.Visibility = ViewStates.Gone;
-                        reditRecylerView.Visibility = ViewStates.Visible;
-
-                        searchButton.Enabled = true;
-                        searchButton.Text = GetString(Resource.String.search);
-
                     });
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                 }
+
+                RunOnUiThread(() =>
+                {
+                    progressBarRequesting.Visibility = ViewStates.Gone;
+                    reditRecylerView.Visibility = ViewStates.Visible;
+
+                    searchButton.Enabled = true;
+                    searchButton.Text = GetString(Resource.String.search);
+                });
             }
         }
 
