@@ -1,39 +1,42 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout android:orientation="vertical" xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    android:layout_width="match_parent" 
+    android:layout_height="match_parent" 
+    android:layout_marginTop="20dp"
+    android:layout_marginRight="20dp"
     tools:showIn="@layout/activity_main">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Search for a subreddit"
+            android:text="@string/search_for_a_subreddit"
             android:textAlignment="center"
             android:textSize="32px"/>
         <android.support.design.widget.TextInputEditText
             android:id="@+id/textInput1"
-            android:layout_width="360px"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Search"/>
+            android:layout_margin="32px"
+            android:hint="@string/search"/>
         <Button
             android:id="@id/search_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="32px"
-            android:text="Search"/>
+            android:text="@string/search"/>
         
-        <LinearLayout
-            android:id="@+id/subreddit__list"
+        <ProgressBar
+        android:id="@+id/progressBarReditLoading"
+        android:layout_width="wrap_content" 
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center" />
+
+        <android.support.v7.widget.RecyclerView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"/>
-    </LinearLayout>
-
-</RelativeLayout>
+            android:id="@+id/reditRecylerView">
+        </android.support.v7.widget.RecyclerView>
+</LinearLayout>

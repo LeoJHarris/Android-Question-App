@@ -1,14 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Android.Support.Design.Widget;
 using Android.Support.V7.App;
+using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
+using Android_Question_App.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -17,6 +22,12 @@ namespace Android_Question_App
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class LoginActivity : AppCompatActivity
     {
+        RecyclerView reditRecylerView;
+        Button searchButton;
+        RecyclerView.LayoutManager mLayoutManager;
+        ProgressBar progressBarRequesting;
+        TextInputEditText textInputEditText;
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -26,36 +37,91 @@ namespace Android_Question_App
             Android.Support.V7.Widget.Toolbar toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
 
-            Button searchButton = FindViewById<Button>(Resource.Id.search_button);
-            searchButton.Click += SearchButton_Click;
+            reditRecylerView = FindViewById<RecyclerView>(Resource.Id.reditRecylerView);
+
+            progressBarRequesting = FindViewById<ProgressBar>(Resource.Id.progressBarReditLoading);
+
+            textInputEditText = FindViewById<TextInputEditText>(Resource.Id.textInput1);
+
+            searchButton = FindViewById<Button>(Resource.Id.search_button);
+            searchButton.Click += onSearchButtonClicked;
         }
 
-        private void SearchButton_Click(object sender, EventArgs e)
+        private void onSearchButtonClicked(object sender, EventArgs e)
         {
-            var json = new WebClient().DownloadString("http://www.reddit.com/subreddits/search.json?q=" + FindViewById<TextInputEditText>(Resource.Id.textInput1).Text);
-            var subreddits = JsonConvert.DeserializeObject<JObject>(json);
+            hideKeyboard();
+            string query = textInputEditText.Text;
+            if (query == null || query.Trim().Equals("")) {
+                return;
+            }
+            
+            searchButton.Enabled = false;
+            searchButton.Text = GetString(Resource.String.searching);
+            ThreadPool.QueueUserWorkItem(async o => await fetchSubRedditsAsync(query));
+        }
 
-            foreach (var subreddit in subreddits["data"]["children"] as JArray)
+        private async Task fetchSubRedditsAsync(String query)
+        {
+            RunOnUiThread(() =>
             {
-                var name = subreddit["data"]["display_name_prefixed"].ToString();
+                reditRecylerView.Visibility = ViewStates.Gone;
+                progressBarRequesting.Visibility = ViewStates.Visible;
+            });
 
-                var subredditList = FindViewById<LinearLayout>(Resource.Id.subreddit__list);
-                var newListItem = new TextView(this);
-                newListItem.Text = name;
-                newListItem.Click += NewListItem_Click;
+            using WebClient client = new WebClient();
+            {
+                try
+                {
+                    string json = await client.DownloadStringTaskAsync(new Uri("http://www.reddit.com/subreddits/search.json?q=" + query)).ConfigureAwait(false);
 
-                subredditList.AddView(newListItem);
+                    JObject subreddits = JsonConvert.DeserializeObject<JObject>(json);
+
+                    RunOnUiThread(() =>
+                    {
+                        reditRecylerView.RemoveAllViews();
+
+                        List<ReditItem> reditItems = new List<ReditItem>();
+
+                        foreach (JToken subreddit in subreddits["data"]["children"] as JArray)
+                        {
+                            string name = subreddit["data"]["display_name_prefixed"].ToString();
+
+                            reditItems.Add(new ReditItem
+                            {
+                                Name = name
+                            });
+                        }
+
+                        mLayoutManager = new LinearLayoutManager(this);
+                        reditRecylerView.SetLayoutManager(mLayoutManager);
+
+                        ReditListAdapter mAdapter = new ReditListAdapter(reditItems);
+
+                        reditRecylerView.SetAdapter(mAdapter);
+
+                        mAdapter.ItemClick += OnItemClick;
+
+                        progressBarRequesting.Visibility = ViewStates.Gone;
+                        reditRecylerView.Visibility = ViewStates.Visible;
+
+                        searchButton.Enabled = true;
+                        searchButton.Text = GetString(Resource.String.search);
+
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 
-        private void NewListItem_Click(object sender, EventArgs e)
+        private void OnItemClick(object sender, ReditItem e)
         {
-            var listItem = (TextView)sender;
-            var subredditName = listItem.Text;
-            var sidebarHtml = new WebClient().DownloadString("http://www.reddit.com/" + subredditName + "/about/sidebar");
-
+            ReditItem reditItem = (ReditItem)e;
+            var sidebarUrl = "http://www.reddit.com/" + reditItem.Name + "/about/sidebar";
             var intent = new Intent(this, typeof(SidebarActivity));
-            intent.PutExtra("sidebarHtml", sidebarHtml);
+            intent.PutExtra("sidebarUrl", sidebarUrl);
             this.StartActivity(intent);
         }
 
@@ -76,6 +142,12 @@ namespace Android_Question_App
 
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         }
-	}
+
+        private void hideKeyboard() {
+            var textInput = FindViewById<TextInputEditText>(Resource.Id.textInput1);
+            textInput.Enabled = false;
+            textInput.Enabled = true;
+        }
+    }
 }
 

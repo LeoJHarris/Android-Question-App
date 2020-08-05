@@ -1,3 +1,7 @@
 <resources>
-  <string name="app_name">Android Question App</string>
+    <string name="app_name">Android Question App</string>
+    <string name="search_for_a_subreddit">Search for a subreddit</string>
+    <string name="search">Search</string>
+    <string name="searching">Searching</string>
+    <string name="downloading">Downloading...</string>
 </resources>
